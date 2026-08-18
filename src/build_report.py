@@ -78,7 +78,8 @@ def _create_summary_sheet(wb, account_current, kpis):
             cell = ws.cell(row=alert_row + i, column=1, value=alert_text)
             cell.font = Font(bold=True, color="FF0000")
     else:
-        cell = ws.cell(row=alert_row, column=1, value="No churn rate alerts")
+        alert_text = f"No plan tier shows churn significantly above average - churn is evenly distributed (~{kpis['overall_churn_rate']:.0f}% across tiers)"
+        cell = ws.cell(row=alert_row, column=1, value=alert_text)
         cell.font = Font(bold=True, color="008000")
     
     # KPI Scorecard (starting at row 4)
@@ -92,6 +93,7 @@ def _create_summary_sheet(wb, account_current, kpis):
         cell.font = Font(bold=True, color="FFFFFF")
     
     # Active MRR (using live formula - sum mrr_amount where end_date is null)
+    # Since openpyxl writes None as truly empty cells, SUMIF with "" should work
     ws.cell(row=kpi_start_row + 1, column=1, value="Active MRR")
     ws.cell(row=kpi_start_row + 1, column=2, value="=SUMIF(Data!F:F, \"\", Data!H:H)")  # Column F is end_date, H is mrr_amount
     ws.cell(row=kpi_start_row + 1, column=2).number_format = "$#,##0"
