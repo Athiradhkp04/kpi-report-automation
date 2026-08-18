@@ -91,14 +91,14 @@ def _create_summary_sheet(wb, account_current, kpis):
         cell.fill = PatternFill(start_color="4F46E5", end_color="4F46E5", fill_type="solid")
         cell.font = Font(bold=True, color="FFFFFF")
     
-    # Active MRR (using live formula)
+    # Active MRR (using live formula - sum mrr_amount where end_date is null)
     ws.cell(row=kpi_start_row + 1, column=1, value="Active MRR")
-    ws.cell(row=kpi_start_row + 1, column=2, value=f"=SUMIF(Data!G:G, \"<>\", Data!G:G)")  # Column G is mrr_amount
+    ws.cell(row=kpi_start_row + 1, column=2, value="=SUMIF(Data!F:F, \"\", Data!H:H)")  # Column F is end_date, H is mrr_amount
     ws.cell(row=kpi_start_row + 1, column=2).number_format = "$#,##0"
     
-    # Active ARR (using live formula)
+    # Active ARR (using live formula - sum arr_amount where end_date is null)
     ws.cell(row=kpi_start_row + 2, column=1, value="Active ARR")
-    ws.cell(row=kpi_start_row + 2, column=2, value=f"=SUMIF(Data!H:H, \"<>\", Data!H:H)")  # Column H is arr_amount
+    ws.cell(row=kpi_start_row + 2, column=2, value="=SUMIF(Data!F:F, \"\", Data!I:I)")  # Column F is end_date, I is arr_amount
     ws.cell(row=kpi_start_row + 2, column=2).number_format = "$#,##0"
     
     # Churn rate by tier (using live formulas)
@@ -106,11 +106,13 @@ def _create_summary_sheet(wb, account_current, kpis):
     ws.cell(row=tier_start_row, column=1, value="Churn Rate by Plan Tier")
     ws.cell(row=tier_start_row, column=1).font = Font(bold=True)
     
-    for i, (tier, rate) in enumerate(kpis['churn_rate_by_tier'].items(), 1):
-        ws.cell(row=tier_start_row + i, column=1, value=tier)
-        # Live formula: COUNTIF where churn_flag=TRUE and plan_tier matches, divided by COUNTIF where plan_tier matches
-        ws.cell(row=tier_start_row + i, column=2, value=rate / 100)  # Placeholder for demo
-        ws.cell(row=tier_start_row + i, column=2).number_format = "0.0%"
+    for i, (tier, rate) in enumerate(kpis['churn_rate_by_tier'].items()):
+        ws.cell(row=tier_start_row + 1 + i, column=1, value=tier)
+        # Live formula: COUNTIFS where churn_flag=TRUE and plan_tier matches, divided by COUNTIF where plan_tier matches
+        # Column D is churn_flag, Column G is plan_tier
+        formula = f"=COUNTIFS(Data!D:D, TRUE, Data!G:G, \"{tier}\")/COUNTIF(Data!G:G, \"{tier}\")"
+        ws.cell(row=tier_start_row + 1 + i, column=2, value=formula)
+        ws.cell(row=tier_start_row + 1 + i, column=2).number_format = "0.0%"
     
     # Chart 1: Churn rate by plan tier
     chart1 = BarChart()
